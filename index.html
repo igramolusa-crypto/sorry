@@ -410,13 +410,6 @@ body[data-screen="s2"] .cursor.on{opacity:.9}
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition-duration:.01ms!important}
 }
-
-/* Стили для админ-панели */
-#adminPanel {
-  position:fixed; inset:0; z-index:9999; background:rgba(10,10,10,0.95); 
-  color:#0f0; font-family:monospace; padding:20px; overflow-y:auto; display:none;
-  backdrop-filter: blur(5px);
-}
 </style>
 </head>
 <body data-mode="dark" data-screen="s0">
@@ -426,21 +419,6 @@ body[data-screen="s2"] .cursor.on{opacity:.9}
 <div id="flash"></div>
 <canvas id="fx"></canvas>
 <div class="cursor" id="cursor"></div>
-
-<!-- АДМИН ПАНЕЛЬ -->
-<div id="adminPanel">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom: 1px solid #333; padding-bottom: 10px;">
-    <h2 style="color:#0f0; margin:0; font-family:monospace;">Visitor Logs (Supabase)</h2>
-    <div>
-      <button id="refreshLogs" style="background:#003300; color:#0f0; border:1px solid #0f0; padding:8px 12px; cursor:pointer; font-family:monospace; margin-right:10px;">Обновить</button>
-      <button id="clearLogs" style="background:#300; color:#f00; border:1px solid #f00; padding:8px 12px; cursor:pointer; font-family:monospace;">Удалить всё</button>
-      <button id="closeAdmin" style="background:#333; color:#fff; border:1px solid #fff; padding:8px 12px; cursor:pointer; font-family:monospace; margin-left:10px;">Закрыть</button>
-    </div>
-  </div>
-  <ul id="logList" style="list-style:none; padding:0; margin:0; font-size:15px; line-height:1.8;">
-    <li>Загрузка данных...</li>
-  </ul>
-</div>
 
 <button class="sound" id="sound" aria-label="Звук">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
@@ -582,92 +560,40 @@ body[data-screen="s2"] .cursor.on{opacity:.9}
 
 </main>
 
-<!-- Supabase SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============================================================
-   НАСТРОЙКИ SUPABASE (ЗАМЕНИТЕ НА СВОИ)
+   НАСТРОЙКИ ТЕЛЕГРАМ (ВСТАВЬ СЮДА СВОИ ДАННЫЕ)
    ============================================================ */
-const SUPABASE_URL = 'ВАШ_SUPABASE_URL'; 
-const SUPABASE_ANON_KEY = 'ВАШ_SUPABASE_ANON_KEY';
+const TG_BOT_TOKEN = '7930119370:AAFt7TcwxvPahyj001im048ERFe9b-InZWQ'; 
+const TG_CHAT_ID = '1162084794';       
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Вспомогательная функция для отправки в ТГ
+async function sendToTelegram(action) {
+  if (TG_BOT_TOKEN === 'ТВОЙ_ТОКЕН_ОТ_BOTFATHER') return; // Защита, если не вставил ключи
 
-/* ============================================================
-   ЛОГИРОВАНИЕ В ОБЛАКО
-   ============================================================ */
-async function logEvent(action, details = {}) {
-  const device = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop';
+  const device = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? '📱 Телефон' : '💻 ПК';
+  const time = new Date().toLocaleString('ru-RU');
+  const screen = document.body.dataset.screen;
   
+  const text = `🔔 *Событие на сайте*\n\n*Действие:* ${action}\n*Устройство:* ${device}\n*Экран:* ${screen}\n*Время:* ${time}`;
+
   try {
-    await supabaseClient.from('visitor_logs').insert([{
-      event_name: action,
-      device_info: device,
-      details: { ...details, screen: document.body.dataset.screen || 'unknown' }
-    }]);
-  } catch (err) {
-    console.error('Ошибка записи лога:', err);
+    await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TG_CHAT_ID,
+        text: text,
+        parse_mode: 'Markdown'
+      })
+    });
+  } catch (e) {
+    console.log('Ошибка отправки в ТГ', e);
   }
 }
 
-/* ============================================================
-   АДМИНКА (ВЫЗОВ ПО КОДУ 1362)
-   ============================================================ */
-const adminPanel = document.getElementById('adminPanel');
-const logList = document.getElementById('logList');
-
-async function fetchLogs() {
-  logList.innerHTML = '<li>Загрузка данных...</li>';
-  const { data, error } = await supabaseClient
-    .from('visitor_logs')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    logList.innerHTML = `<li style="color:red">Ошибка: ${error.message}</li>`;
-    return;
-  }
-
-  if (data.length === 0) {
-    logList.innerHTML = '<li>Логов пока нет.</li>';
-    return;
-  }
-
-  logList.innerHTML = data.map(l => {
-    const date = new Date(l.created_at).toLocaleString('ru-RU');
-    const detailStr = Object.keys(l.details).length > 0 ? JSON.stringify(l.details) : '';
-    return `<li><span style="color:#888;">[${date}]</span> <span style="color:#0af;">[${l.device_info}]</span> ${l.event_name} <span style="color:#555;">${detailStr}</span></li>`;
-  }).join('');
-}
-
-document.getElementById('refreshLogs').addEventListener('click', fetchLogs);
-
-document.getElementById('clearLogs').addEventListener('click', async () => {
-  if (!confirm('Удалить все логи из базы?')) return;
-  const { error } = await supabaseClient.from('visitor_logs').delete().neq('id', 0);
-  if (error) alert('Ошибка удаления: ' + error.message);
-  else fetchLogs();
-});
-
-document.getElementById('closeAdmin').addEventListener('click', () => {
-  adminPanel.style.display = 'none';
-});
-
-let keyBuffer = '';
-document.addEventListener('keydown', (e) => {
-  if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
-  keyBuffer += e.key;
-  if (keyBuffer.length > 10) keyBuffer = keyBuffer.slice(-10);
-  if (keyBuffer.endsWith('1362')) {
-    const isHidden = adminPanel.style.display === 'none';
-    adminPanel.style.display = isHidden ? 'block' : 'none';
-    if (isHidden) fetchLogs();
-    keyBuffer = '';
-  }
-});
-
-// Логируем вход
-window.addEventListener('load', () => logEvent('Зашел на сайт'));
+// Вызов при заходе на сайт
+window.addEventListener('load', () => sendToTelegram('Зашел(ла) на сайт'));
 
 /* ============================================================
    НАСТРОЙКИ САЙТА
@@ -855,7 +781,7 @@ function show(id){
 document.getElementById('startBtn').addEventListener('click', () => {
   initAudio();
   chime();
-  logEvent('Нажал "Открыть"');
+  sendToTelegram('Нажал(а) "Открыть"');
   show('s1');
 });
 
@@ -888,7 +814,6 @@ function endHold(){
   if (opened) return;
   seal.style.setProperty('--p', 0);
 }
-
 seal.addEventListener('pointerdown', startHold);
 seal.addEventListener('pointerup', endHold);
 seal.addEventListener('pointercancel', endHold);
@@ -902,7 +827,7 @@ function openEnvelope(){
   beep(420, .12, .07);
   setTimeout(()=>beep(620, .2, .06), 200);
   setTimeout(()=>beep(830, .25, .05), 450);
-  logEvent('Сломал печать на конверте');
+  sendToTelegram('Сломал(а) печать на конверте');
   setTimeout(()=>show('s2'), 1400);
 }
 
@@ -921,8 +846,8 @@ function advanceLine(){
   ln.classList.add('on');
   rustle();
   lineIdx++;
-  logEvent('Прочитал строку письма');
   if (lineIdx === lines.length){
+    sendToTelegram('Дочитал(а) письмо до конца');
     sigEl.classList.add('on');
     tapHint.classList.add('hide');
     setTimeout(() => {
@@ -948,7 +873,7 @@ document.getElementById('inkblot').addEventListener('click', e => {
   e.currentTarget.classList.add('revealed');
   document.getElementById('easter').classList.add('on');
   beep(340, .3, .05, 'triangle');
-  logEvent('Нашел скрытую кляксу');
+  sendToTelegram('Нашел(ла) скрытую кляксу');
 });
 
 /* ============================================================
@@ -961,9 +886,9 @@ const confessNext = document.getElementById('confessNext');
 confBoxes.forEach((cb, index) => {
   cb.addEventListener('change', () => {
     beep(cb.checked ? 880 : 440, .09, .05);
-    logEvent(`Кликнул пункт признания №${index + 1}`);
     const done = confBoxes.filter(c => c.checked).length;
     if (done === confBoxes.length){
+      sendToTelegram('Отметил(а) ВСЕ пункты признания');
       verdictEl.classList.add('on');
       confessNext.disabled = false;
       setTimeout(chime, 300);
@@ -989,7 +914,7 @@ scrolls.forEach(s => {
     s.classList.toggle('open');
     beep(s.classList.contains('open') ? 620 : 400, .1, .05);
     openedScrolls.add(s.dataset.i);
-    logEvent('Открыл обещание', { title: s.querySelector('.scroll-title').textContent });
+    sendToTelegram(`Открыл(а) обещание: "${s.querySelector('.scroll-title').textContent}"`);
     if (openedScrolls.size === scrolls.length){
       thumbArea.classList.add('on');
     }
@@ -1027,7 +952,7 @@ function sealThumb(){
   if (navigator.vibrate) navigator.vibrate([30, 40, 80]);
   scrollNext.disabled = false;
   scrollNext.style.opacity = '1';
-  logEvent('Зажал палец (подтвердил обещания)');
+  sendToTelegram('Зажал(а) палец (подтвердил(а) обещания)');
 }
 thumb.addEventListener('pointerdown', startThumb);
 thumb.addEventListener('pointerup', endThumb);
@@ -1051,7 +976,7 @@ function dodge(e){
   if (now - lastDodge < 320) return;
   lastDodge = now;
   dodges++;
-  logEvent(`Нажала "Нет", но кнопка убежала (попытка ${dodges})`);
+  sendToTelegram(`Пытался(ась) нажать "Нет", но кнопка убежала (попытка ${dodges})`);
   beep(240 + Math.random() * 160, .08, .04, 'triangle');
   heartbeat();
 
@@ -1077,7 +1002,7 @@ noBtn.addEventListener('touchstart', dodge, { passive: false });
 yesBtn.addEventListener('click', () => {
   chime();
   setTimeout(()=>chime(), 250);
-  logEvent('Нажала "Прощаю"');
+  sendToTelegram('🔥 НАЖАЛА "ПРОЩАЮ" 🔥');
   show('s6');
 });
 
@@ -1090,11 +1015,11 @@ psBtn.addEventListener('click', () => {
   const on = psText.classList.toggle('on');
   beep(on ? 780 : 460, .1, .05);
   psBtn.style.opacity = on ? '.4' : '1';
-  logEvent('Открыла P.S.');
+  sendToTelegram('Открыл(а) P.S.');
 });
 
 document.getElementById('replay').addEventListener('click', () => {
-  logEvent('Нажала "Перечитать"');
+  sendToTelegram('Нажал(а) "Перечитать"');
   opened = false;
   envelope.classList.remove('open');
   seal.style.setProperty('--p', 0);
