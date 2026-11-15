@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Кира, прочти</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Karla:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f4ebd8; --paper-hi:#fbf5e6; --paper-dk:#e8dcc2;
+  --ink:#2a1e13; --ink-soft:#6b5847; --rule:rgba(42,30,19,.15);
+  --wine:#a53a26; --rust:#c85a3a; --gold:#b8924a;
+  --storm:#0e0a07;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:'Karla',system-ui,sans-serif;
+  color:var(--ink);
+  background:var(--storm);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  transition:background 1.6s ease;
+}
+body[data-mode="paper"]{background:var(--paper)}
+
+body::after{
+  content:'';position:fixed;inset:0;z-index:998;pointer-events:none;
+  opacity:.14;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+#backdrop{
+  position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(80% 60% at 20% 10%, rgba(255,240,210,.9) 0%, transparent 55%),
+    radial-gradient(90% 80% at 90% 100%, rgba(220,200,160,.5) 0%, transparent 60%),
+    var(--paper);
+  opacity:0;transition:opacity 1.6s ease;
+}
+body[data-mode="paper"] #backdrop{opacity:1}
+
+#rain, #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+#rain{z-index:1}
+#fx{z-index:50}
+
+#flash{
+  position:fixed;inset:0;z-index:2;pointer-events:none;
+  background:rgba(255,240,210,.9);opacity:0;
+}
+#flash.on{animation:flash .6s ease-out}
+@keyframes flash{0%{opacity:0}8%{opacity:.55}20%{opacity:0}35%{opacity:.28}50%{opacity:0}}
+
+.cursor{
+  position:fixed;left:0;top:0;width:8px;height:8px;border-radius:50%;
+  background:var(--ink);pointer-events:none;z-index:1000;
+  transform:translate(-50%,-50%);opacity:0;
+  transition:width .18s ease,height .18s ease,opacity .3s ease,background .3s ease;
+}
+body[data-mode="paper"] .cursor{background:var(--wine)}
+.cursor.on{opacity:.65}
+@media (hover:none),(pointer:coarse){.cursor{display:none}}
+
+.sound{
+  position:fixed;top:16px;right:16px;z-index:500;
+  width:44px;height:44px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.25);
+  background:rgba(0,0,0,.35);color:rgba(255,255,255,.8);
+  font-size:1rem;cursor:pointer;display:grid;place-items:center;
+  transition:.3s ease;backdrop-filter:blur(4px);
+}
+body[data-mode="paper"] .sound{
+  border-color:var(--rule);background:rgba(255,255,255,.5);color:var(--ink-soft);
+}
+.sound:hover{transform:scale(1.08)}
+.sound.off{opacity:.4}
+.sound svg{width:16px;height:16px}
+
+main{position:relative;z-index:10;height:100%}
+.screen{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:22px;padding:24px;text-align:center;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .8s ease,visibility .8s ease;
+}
+.screen.active{opacity:1;visibility:visible;pointer-events:auto}
+.screen > *{transform:translateY(16px);opacity:0;transition:transform .9s cubic-bezier(.2,.8,.3,1),opacity .9s ease}
+.screen.active > *{transform:none;opacity:1}
+.screen.active > *:nth-child(2){transition-delay:.15s}
+.screen.active > *:nth-child(3){transition-delay:.3s}
+.screen.active > *:nth-child(4){transition-delay:.45s}
+
+#s0{color:rgba(255,240,215,.92)}
+#s0 .storm-inner{max-width:520px;display:grid;gap:26px;justify-items:center}
+#s0 .whisper{
+  font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:clamp(1rem,3.6vw,1.15rem);color:rgba(255,240,215,.55);
+  letter-spacing:.02em;
+}
+#s0 h1{
+  font-family:'Cormorant Garamond',serif;font-weight:500;
+  font-size:clamp(2.4rem,9vw,3.8rem);line-height:1.05;
+  letter-spacing:-.02em;
+  color:#f4ebd8;
+  text-shadow:0 4px 40px rgba(200,90,60,.4), 0 0 80px rgba(255,150,100,.15);
+}
+#s0 h1 em{
+  font-family:'Caveat',cursive;font-style:normal;font-weight:600;
+  color:var(--rust);display:block;margin-top:.1em;
+}
+#s0 .sub{color:rgba(255,240,215,.6);font-weight:300;line-height:1.7;max-width:380px}
+#s0 .start{
+  margin-top:10px;
+  font-family:'Karla',sans-serif;font-size:.75rem;font-weight:600;letter-spacing:.28em;text-transform:uppercase;
+  padding:17px 40px;border-radius:2px;
+  border:1.5px solid rgba(255,240,215,.35);background:transparent;color:rgba(255,240,215,.9);
+  cursor:pointer;transition:.35s ease;
+}
+#s0 .start:hover{background:rgba(255,240,215,.08);border-color:rgba(255,240,215,.65);letter-spacing:.32em}
+
+#s1{color:#f4ebd8}
+#s1 .hint-top{
+  font-family:'Caveat',cursive;font-size:clamp(1.3rem,4.5vw,1.6rem);
+  color:rgba(255,240,215,.55);transform:rotate(-2deg);
+}
+.envelope{
+  position:relative;width:min(84vw,340px);aspect-ratio:3/2;
+  filter:drop-shadow(0 30px 40px rgba(0,0,0,.55));
+  transition:transform .5s cubic-bezier(.2,.8,.3,1);
+}
+.envelope:hover{transform:translateY(-4px)}
+.env-back{position:absolute;inset:0;border-radius:3px;background:linear-gradient(160deg,#e8dcc2,#d4c3a0);z-index:1}
+.env-note{
+  position:absolute;left:7%;right:7%;top:9%;bottom:9%;z-index:2;
+  background:linear-gradient(180deg,#fbf5e6,#f2e6cd);border-radius:2px;
+  display:grid;place-items:center;
+  font-family:'Caveat',cursive;font-size:clamp(1.4rem,5vw,2rem);color:#a89372;
+  box-shadow:0 1px 8px rgba(70,45,20,.15);
+  transition:transform 1s cubic-bezier(.2,.9,.25,1);
+}
+.env-front{
+  position:absolute;inset:0;z-index:3;border-radius:3px;
+  background:linear-gradient(170deg,#e8dcc2,#d4c3a0);
+  clip-path:polygon(0 0, 50% 53%, 100% 0, 100% 100%, 0 100%);
+}
+.env-flap{
+  position:absolute;left:0;right:0;top:0;height:55%;z-index:4;
+  background:linear-gradient(180deg,#efe3cc,#ddcba8);
+  clip-path:polygon(0 0, 100% 0, 50% 100%);
+  transform-origin:top center;
+  transition:transform 1s cubic-bezier(.5,0,.2,1);
+}
+.seal{
+  position:absolute;left:50%;top:53%;translate:-50% -50%;z-index:5;
+  width:74px;height:74px;border-radius:50%;border:none;cursor:pointer;
+  background:radial-gradient(circle at 34% 28%,#c85a3a,#7d2312);
+  color:#f4ebd8;font-family:'Cormorant Garamond',serif;font-size:1.7rem;
+  display:grid;place-items:center;
+  box-shadow:0 10px 20px rgba(120,40,20,.5), inset 0 -3px 10px rgba(0,0,0,.35);
+  transition:transform .3s ease,opacity .5s ease;
+  touch-action:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.seal::before{
+  content:'';position:absolute;inset:-8px;border-radius:50%;
+  background:conic-gradient(rgba(255,220,180,.9) calc(var(--p,0) * 1%), rgba(255,220,180,.15) 0);
+  -webkit-mask:radial-gradient(circle, transparent 61%, #000 63%);
+  mask:radial-gradient(circle, transparent 61%, #000 63%);
+  transition:opacity .3s ease;
+  pointer-events:none;
+}
+.seal:hover{transform:scale(1.06)}
+.envelope.open .env-flap{transform:rotateX(180deg);z-index:0}
+.envelope.open .env-note{transform:translateY(-55%) scale(.96)}
+.envelope.open .seal{transform:scale(.4);opacity:0;pointer-events:none}
+#s1 .hint-bot{
+  font-family:'Karla',sans-serif;font-size:.7rem;font-weight:600;
+  letter-spacing:.26em;text-transform:uppercase;
+  color:rgba(255,240,215,.4);
+  animation:breathe 3s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{opacity:.3}50%{opacity:.8}}
+
+.paper{
+  position:relative;width:100%;max-width:600px;max-height:84vh;overflow-y:auto;
+  padding:clamp(30px,6vw,50px) clamp(24px,5vw,46px) clamp(26px,5vw,42px);
+  background:linear-gradient(180deg,var(--paper-hi),var(--paper-dk));
+  border-radius:2px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.8),
+    0 20px 60px -18px rgba(60,35,15,.6),
+    0 3px 8px rgba(60,35,15,.15);
+  text-align:left;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(42,30,19,.2) transparent;
+}
+.paper::-webkit-scrollbar{width:6px}
+.paper::-webkit-scrollbar-thumb{background:rgba(42,30,19,.15);border-radius:3px}
+.paper::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:38px;
+  background:linear-gradient(90deg,rgba(42,30,19,.08),transparent);
+  pointer-events:none;
+}
+.tape{
+  position:absolute;top:-13px;left:50%;width:120px;height:26px;
+  transform:translateX(-50%) rotate(-2.5deg);
+  background:rgba(200,170,116,.42);
+  border-left:1px dashed rgba(255,255,255,.55);
+  border-right:1px dashed rgba(255,255,255,.55);
+  box-shadow:0 2px 6px rgba(70,45,20,.15);
+  pointer-events:none;z-index:2;
+}
+
+h1,h2{font-family:'Cormorant Garamond',serif;font-weight:600;line-height:1.15;letter-spacing:-.01em}
+h2{font-size:clamp(1.6rem,5.5vw,2.1rem);margin-bottom:.55rem}
+.sub{color:var(--ink-soft);font-weight:300;line-height:1.7;font-size:clamp(.94rem,3.3vw,1.03rem)}
+
+.btn{
+  font-family:'Karla',sans-serif;font-size:.75rem;font-weight:600;
+  letter-spacing:.24em;text-transform:uppercase;
+  padding:15px 34px;border-radius:2px;
+  border:1.5px solid var(--ink);background:transparent;color:var(--ink);
+  cursor:pointer;transition:background .3s ease,color .3s ease,transform .2s ease,opacity .3s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn:active{transform:scale(.97)}
+.btn.ghost{border-color:var(--rule);color:var(--ink-soft)}
+.btn.ghost:hover{border-color:var(--ink);background:transparent;color:var(--ink)}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.btn:disabled:hover{background:transparent;color:var(--ink)}
+
+#s2 .letter{padding-bottom:70px;position:relative}
+#s2 .salut{
+  font-family:'Caveat',cursive;font-size:clamp(1.8rem,6vw,2.3rem);
+  margin-bottom:22px;color:var(--ink);
+}
+#s2 .line{
+  font-family:'Cormorant Garamond',serif;font-size:clamp(1.05rem,4vw,1.22rem);
+  line-height:1.75;color:#33271c;margin-bottom:16px;
+  opacity:0;transform:translateY(10px);filter:blur(6px);
+  transition:opacity .9s ease,transform .9s ease,filter .9s ease;
+}
+#s2 .line.on{opacity:1;transform:none;filter:none}
+#s2 .line s{color:rgba(42,30,19,.4);text-decoration-thickness:1.5px;text-decoration-color:rgba(165,58,38,.7)}
+#s2 .sig{
+  font-family:'Caveat',cursive;font-size:clamp(1.5rem,5vw,1.85rem);
+  color:var(--wine);text-align:right;margin-top:26px;transform:rotate(-2deg);
+  opacity:0;transition:opacity .9s ease;font-style:italic;
+}
+#s2 .sig.on{opacity:1}
+#s2 .tap{
+  position:absolute;bottom:16px;left:0;right:0;text-align:center;
+  font-family:'Karla',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.24em;
+  text-transform:uppercase;color:rgba(42,30,19,.35);
+  animation:breathe 2.6s ease-in-out infinite;
+  pointer-events:none;transition:opacity .4s ease;
+}
+#s2 .tap.hide{opacity:0}
+#s2 .inkblot{
+  position:absolute;width:26px;height:26px;border-radius:50%;
+  background:radial-gradient(circle at 40% 40%,rgba(30,20,10,.9),rgba(30,20,10,.4) 60%,transparent 75%);
+  filter:blur(.5px);cursor:pointer;
+  transition:transform .3s ease;
+  opacity:.7;
+}
+#s2 .inkblot:hover{transform:scale(1.25);opacity:1}
+#s2 .inkblot.revealed{pointer-events:none;opacity:.15;transform:scale(1.4)}
+#s2 .easter{
+  font-family:'Caveat',cursive;font-size:clamp(1.05rem,3.8vw,1.28rem);
+  color:var(--wine);opacity:0;max-height:0;overflow:hidden;transition:all .9s ease;
+  font-style:italic;margin-top:8px;
+}
+#s2 .easter.on{opacity:1;max-height:150px;margin-top:14px}
+
+body[data-screen="s2"]{cursor:none}
+body[data-screen="s2"] .cursor{width:5px;height:5px;background:rgba(42,30,19,.85)}
+body[data-screen="s2"] .cursor.on{opacity:.9}
+
+.confess{display:grid;gap:12px;margin:20px 0 4px}
+.confess label{
+  display:flex;gap:14px;align-items:flex-start;cursor:pointer;padding:8px 0;
+  user-select:none;border-bottom:1px dashed rgba(42,30,19,.12);
+}
+.confess label:last-child{border-bottom:none}
+.confess input{position:absolute;opacity:0}
+.cbox{
+  flex:0 0 auto;width:22px;height:22px;border:1.5px solid rgba(42,30,19,.5);
+  border-radius:2px;position:relative;transition:.3s ease;margin-top:2px;transform:rotate(-1deg);
+}
+.cbox::after{
+  content:'';position:absolute;left:5px;top:1px;width:7px;height:12px;
+  border-right:2.2px solid var(--paper-hi);border-bottom:2.2px solid var(--paper-hi);
+  transform:rotate(42deg) scale(0);transition:transform .3s cubic-bezier(.2,1.7,.4,1);
+}
+.confess input:checked + .cbox{background:var(--wine);border-color:var(--wine);transform:rotate(-4deg)}
+.confess input:checked + .cbox::after{transform:rotate(42deg) scale(1)}
+.confess .txt{font-size:clamp(.92rem,3.4vw,1.02rem);line-height:1.55;color:#3a2e22;font-weight:300;transition:.3s}
+.confess input:checked ~ .txt{color:rgba(42,30,19,.55)}
+.verdict{
+  font-family:'Caveat',cursive;font-size:clamp(1.3rem,4.5vw,1.7rem);
+  color:var(--wine);margin-top:22px;opacity:0;max-height:0;transition:all .7s ease;
+  text-align:center;font-style:italic;
+}
+.verdict.on{opacity:1;max-height:100px;margin-top:26px}
+
+.scrolls{display:grid;gap:16px;margin:16px 0 8px}
+.scroll{
+  cursor:pointer;padding:0;background:transparent;border:none;font:inherit;color:inherit;text-align:left;
+  border-radius:2px;overflow:hidden;
+  transition:transform .3s ease;
+}
+.scroll:hover{transform:translateX(2px)}
+.scroll-head{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;
+  background:linear-gradient(180deg,#f0e2c2,#e2cfa6);
+  border:1px solid rgba(42,30,19,.18);
+  border-radius:2px 2px 0 0;
+  position:relative;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+}
+.scroll-head::before,.scroll-head::after{
+  content:'';position:absolute;left:8px;right:8px;height:1px;
+  background:rgba(42,30,19,.08);
+}
+.scroll-head::before{top:6px}
+.scroll-head::after{bottom:6px}
+.scroll-num{
+  font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:1.15rem;color:var(--wine);flex:0 0 auto;
+}
+.scroll-title{
+  font-family:'Caveat',cursive;font-size:clamp(1.15rem,4vw,1.35rem);
+  color:var(--ink);flex:1;line-height:1.3;
+}
+.scroll-tog{
+  font-size:.9rem;color:var(--ink-soft);transition:transform .5s cubic-bezier(.2,1,.4,1);
+}
+.scroll.open .scroll-tog{transform:rotate(180deg)}
+.scroll-body{
+  max-height:0;overflow:hidden;transition:max-height .7s cubic-bezier(.2,.8,.3,1), padding .5s ease;
+  background:linear-gradient(180deg,#fbf5e6,#f0e6cf);
+  border:1px solid rgba(42,30,19,.12);border-top:none;border-radius:0 0 2px 2px;
+  padding:0 18px;
+}
+.scroll.open .scroll-body{
+  max-height:200px;padding:16px 18px 18px;
+}
+.scroll-body p{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(.98rem,3.6vw,1.08rem);line-height:1.7;color:#3a2e22;
+}
+
+.thumb-area{
+  margin-top:26px;display:grid;justify-items:center;gap:12px;
+  opacity:0;max-height:0;overflow:hidden;transition:all .7s ease;
+}
+.thumb-area.on{opacity:1;max-height:220px;margin-top:30px}
+.thumb-hint{
+  font-family:'Karla',sans-serif;font-size:.68rem;font-weight:600;
+  letter-spacing:.24em;text-transform:uppercase;color:rgba(42,30,19,.5);
+}
+.thumb{
+  position:relative;width:82px;height:82px;border-radius:50%;border:none;cursor:pointer;
+  background:radial-gradient(circle at 40% 35%,#c85a3a,#7d2312);
+  color:#f4ebd8;font-family:'Cormorant Garamond',serif;font-size:.85rem;
+  display:grid;place-items:center;
+  box-shadow:0 8px 20px rgba(120,40,20,.4), inset 0 -3px 10px rgba(0,0,0,.3);
+  touch-action:none;-webkit-tap-highlight-color:transparent;
+  transition:transform .3s ease,opacity .5s ease;
+}
+.thumb::before{
+  content:'';position:absolute;inset:-8px;border-radius:50%;
+  background:conic-gradient(rgba(255,220,180,.95) calc(var(--p,0) * 1%), rgba(255,220,180,.12) 0);
+  -webkit-mask:radial-gradient(circle, transparent 61%, #000 63%);
+  mask:radial-gradient(circle, transparent 61%, #000 63%);
+  pointer-events:none;
+}
+.thumb:hover{transform:scale(1.05)}
+.thumb.done{transform:scale(1.1);opacity:.65;pointer-events:none}
+
+#s5 .question-wrap{text-align:center}
+#s5 h2{font-size:clamp(1.8rem,6.5vw,2.5rem);margin-bottom:10px}
+.answers{
+  display:flex;gap:20px;justify-content:center;align-items:center;flex-wrap:wrap;
+  margin-top:32px;min-height:70px;
+}
+#yesBtn{
+  transition:transform .4s cubic-bezier(.2,1.4,.4,1),background .3s,color .3s,box-shadow .4s;
+  font-size:.8rem;padding:16px 40px;
+}
+#yesBtn:hover{box-shadow:0 0 40px rgba(165,58,38,.35)}
+#noBtn{
+  transition:transform .2s ease,left .35s cubic-bezier(.2,.9,.3,1),top .35s cubic-bezier(.2,.9,.3,1),opacity .35s;
+}
+
+#s6 .final-wrap{display:grid;gap:26px;justify-items:center;width:100%;max-width:560px}
+#s6 .thanks{
+  font-family:'Cormorant Garamond',serif;font-size:clamp(1.6rem,5.5vw,2.1rem);
+  font-weight:600;color:var(--ink);text-align:center;
+}
+#s6 .thanks em{font-family:'Caveat',cursive;font-style:normal;color:var(--wine);display:block;margin-top:.15em}
+#s6 .after{color:var(--ink-soft);font-weight:300;line-height:1.7;text-align:center;max-width:400px;font-size:.98rem}
+#s6 .replay{margin-top:6px}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important}
+}
+
+/* Стили для админ-панели */
+#adminPanel {
+  position:fixed; inset:0; z-index:9999; background:rgba(10,10,10,0.95); 
+  color:#0f0; font-family:monospace; padding:20px; overflow-y:auto; display:none;
+  backdrop-filter: blur(5px);
+}
+</style>
+</head>
+<body data-mode="dark" data-screen="s0">
+
+<div id="backdrop"></div>
+<canvas id="rain"></canvas>
+<div id="flash"></div>
+<canvas id="fx"></canvas>
+<div class="cursor" id="cursor"></div>
+
+<!-- АДМИН ПАНЕЛЬ -->
+<div id="adminPanel">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom: 1px solid #333; padding-bottom: 10px;">
+    <h2 style="color:#0f0; margin:0; font-family:monospace;">Visitor Logs (Supabase)</h2>
+    <div>
+      <button id="refreshLogs" style="background:#003300; color:#0f0; border:1px solid #0f0; padding:8px 12px; cursor:pointer; font-family:monospace; margin-right:10px;">Обновить</button>
+      <button id="clearLogs" style="background:#300; color:#f00; border:1px solid #f00; padding:8px 12px; cursor:pointer; font-family:monospace;">Удалить всё</button>
+      <button id="closeAdmin" style="background:#333; color:#fff; border:1px solid #fff; padding:8px 12px; cursor:pointer; font-family:monospace; margin-left:10px;">Закрыть</button>
+    </div>
+  </div>
+  <ul id="logList" style="list-style:none; padding:0; margin:0; font-size:15px; line-height:1.8;">
+    <li>Загрузка данных...</li>
+  </ul>
+</div>
+
+<button class="sound" id="sound" aria-label="Звук">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
+</button>
+
+<main>
+
+  <section class="screen active" id="s0">
+    <div class="storm-inner">
+      <p class="whisper">Кира, я знаю, что ты не хочешь со мной говорить</p>
+      <h1>Просто прочти.<em>пожалуйста.</em></h1>
+      <p class="sub">Я не буду спамить сообщениями.<br>Но я должен сказать это по-человечески, а не в чате.</p>
+      <button class="start" id="startBtn">открыть</button>
+    </div>
+  </section>
+
+  <section class="screen" id="s1">
+    <p class="hint-top">письмо для <span id="name1">Киры</span></p>
+    <div class="envelope" id="envelope">
+      <div class="env-back"></div>
+      <div class="env-note"><span>для тебя</span></div>
+      <div class="env-front"></div>
+      <div class="env-flap"></div>
+      <button class="seal" id="seal" aria-label="Держи, чтобы сломать печать">✳</button>
+    </div>
+    <p class="hint-bot" id="sealHint">зажми печать</p>
+  </section>
+
+  <section class="screen" id="s2">
+    <article class="paper letter" id="letter">
+      <span class="tape"></span>
+      <p class="salut" id="salut">Я перечитал нашу вчерашнюю переписку.</p>
+      <div id="lines">
+        <p class="line" data-i="0">Мне стыдно за каждое слово. Не потому что не сдержался, а потому что вообще позволил себе так с тобой говорить.</p>
+        <p class="line" data-i="1">Ты сказала, что я косячу раз в 2-3 недели, а потом просто извиняюсь. И ты права.</p>
+        <p class="line" data-i="2">Мои извинения ничего не стоили, потому что я продолжал делать то же самое.</p>
+        <p class="line" data-i="3">И самое мерзкое, я попытался обвинить тебя в том, что ты обиделась на фигню. Это было жестоко.</p>
+        <p class="line" data-i="4">Ты не должна была это терпеть. И то, что ты перестала со мной общаться, абсолютно логично.</p>
+        <p class="line" data-i="5">Мне правда очень жаль.</p>
+      </div>
+      <p class="sig" id="sig">— <span id="yourNameSig">я</span></p>
+      <div class="easter" id="easter">я понял, что могу потерять тебя не из-за одной ссоры, а из-за своего отношения.</div>
+      <div class="inkblot" id="inkblot" style="right:22px;top:22px" title="..."></div>
+      <div class="tap" id="tapHint">нажми, чтобы продолжить</div>
+    </article>
+    <button class="btn" id="letterNext" style="display:none">дальше</button>
+  </section>
+
+  <section class="screen" id="s3">
+    <div class="paper">
+      <h2>Что я сделал не так</h2>
+      <p class="sub">Без оправданий и "я не хотел".</p>
+      <div class="confess" id="confess">
+        <label><input type="checkbox"><span class="cbox"></span><span class="txt">Я перешел на оскорбления.</span></label>
+        <label><input type="checkbox"><span class="cbox"></span><span class="txt">Я обесценил твои чувства, сказав что это фигня.</span></label>
+        <label><input type="checkbox"><span class="cbox"></span><span class="txt">Я пытался откупиться подарками, вместо того чтобы просто услышать тебя.</span></label>
+        <label><input type="checkbox"><span class="cbox"></span><span class="txt">Я заваливал тебя сообщениями, когда ты просила этого не делать.</span></label>
+        <label><input type="checkbox"><span class="cbox"></span><span class="txt">Я сделал так, что ты постоянно ждала моего очередного срыва.</span></label>
+      </div>
+      <p class="verdict" id="verdict">Я услышал тебя. Всё. Без оправданий.</p>
+      <div style="margin-top:26px;text-align:center">
+        <button class="btn" id="confessNext" disabled>дальше</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="s4">
+    <div class="paper">
+      <h2>Что я понял</h2>
+      <p class="sub">Это не обещания стать лучше. Это выводы.</p>
+      <div class="scrolls" id="scrolls">
+        <button class="scroll" data-i="0">
+          <div class="scroll-head">
+            <span class="scroll-num">I</span>
+            <span class="scroll-title">Эмоции это не оправдание</span>
+            <span class="scroll-tog">▾</span>
+          </div>
+          <div class="scroll-body"><p>То, что я сказал на эмоциях, это то, что сидело во мне. Я должен был держать это при себе, а не сливать на тебя.</p></div>
+        </button>
+        <button class="scroll" data-i="1">
+          <div class="scroll-head">
+            <span class="scroll-num">II</span>
+            <span class="scroll-title">Сорян это не извинение</span>
+            <span class="scroll-tog">▾</span>
+          </div>
+          <div class="scroll-body"><p>Слова ничего не стоят, если после них ничего не меняется. Я больше не буду просто кидаться извинениями.</p></div>
+        </button>
+        <button class="scroll" data-i="2">
+          <div class="scroll-head">
+            <span class="scroll-num">III</span>
+            <span class="scroll-title">Уважать твой выбор</span>
+            <span class="scroll-tog">▾</span>
+          </div>
+          <div class="scroll-body"><p>Если ты сказала не хочу общаться, я должен это принять. А не заваливать тебя цветами и сообщениями.</p></div>
+        </button>
+        <button class="scroll" data-i="3">
+          <div class="scroll-head">
+            <span class="scroll-num">IV</span>
+            <span class="scroll-title">Тишина</span>
+            <span class="scroll-tog">▾</span>
+          </div>
+          <div class="scroll-body"><p>Я перестану писать. Ты можешь просто закрыть эту страницу. Я приму любое твое решение.</p></div>
+        </button>
+      </div>
+      <div class="thumb-area" id="thumbArea">
+        <p class="thumb-hint">зажми, чтобы закрыть письмо</p>
+        <button class="thumb" id="thumb" aria-label="Зажать, чтобы закрыть">✳</button>
+      </div>
+      <div style="margin-top:20px;text-align:center">
+        <button class="btn" id="scrollNext" disabled style="opacity:.3">дальше</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="s5">
+    <div class="paper question-wrap">
+      <span class="tape"></span>
+      <h2 id="question">Ты сможешь меня простить?</h2>
+      <p class="sub">Без спешки. И только если правда.</p>
+      <div class="answers" id="answers">
+        <button class="btn" id="yesBtn">Прощаю</button>
+        <button class="btn ghost" id="noBtn">Нет</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="s6">
+    <div class="final-wrap">
+      <p class="thanks">Спасибо, что прочитала.<em>я это очень ценю</em></p>
+      <p class="after">Ты не обязана была прощать. И то, что ты здесь, значит, что стоит продолжать.</p>
+      <p class="after" style="font-weight:bold; color:var(--wine); margin-top:10px; font-size:1.1rem;">Пожалуйста, прости меня.</p>
+      <div class="ps-wrap" style="margin-top:6px;text-align:center">
+        <button class="btn ghost" id="psBtn">P.S.</button>
+        <p class="ps-text" id="psText">я долго думал, что должен просто исправиться. Но правильнее быть рядом. каждый день. не на словах.</p>
+      </div>
+      <button class="btn ghost replay" id="replay">перечитать</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ============================================================
+   НАСТРОЙКИ SUPABASE (ЗАМЕНИТЕ НА СВОИ)
+   ============================================================ */
+const SUPABASE_URL = 'ВАШ_SUPABASE_URL'; 
+const SUPABASE_ANON_KEY = 'ВАШ_SUPABASE_ANON_KEY';
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ============================================================
+   ЛОГИРОВАНИЕ В ОБЛАКО
+   ============================================================ */
+async function logEvent(action, details = {}) {
+  const device = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop';
+  
+  try {
+    await supabaseClient.from('visitor_logs').insert([{
+      event_name: action,
+      device_info: device,
+      details: { ...details, screen: document.body.dataset.screen || 'unknown' }
+    }]);
+  } catch (err) {
+    console.error('Ошибка записи лога:', err);
+  }
+}
+
+/* ============================================================
+   АДМИНКА (ВЫЗОВ ПО КОДУ 1362)
+   ============================================================ */
+const adminPanel = document.getElementById('adminPanel');
+const logList = document.getElementById('logList');
+
+async function fetchLogs() {
+  logList.innerHTML = '<li>Загрузка данных...</li>';
+  const { data, error } = await supabaseClient
+    .from('visitor_logs')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    logList.innerHTML = `<li style="color:red">Ошибка: ${error.message}</li>`;
+    return;
+  }
+
+  if (data.length === 0) {
+    logList.innerHTML = '<li>Логов пока нет.</li>';
+    return;
+  }
+
+  logList.innerHTML = data.map(l => {
+    const date = new Date(l.created_at).toLocaleString('ru-RU');
+    const detailStr = Object.keys(l.details).length > 0 ? JSON.stringify(l.details) : '';
+    return `<li><span style="color:#888;">[${date}]</span> <span style="color:#0af;">[${l.device_info}]</span> ${l.event_name} <span style="color:#555;">${detailStr}</span></li>`;
+  }).join('');
+}
+
+document.getElementById('refreshLogs').addEventListener('click', fetchLogs);
+
+document.getElementById('clearLogs').addEventListener('click', async () => {
+  if (!confirm('Удалить все логи из базы?')) return;
+  const { error } = await supabaseClient.from('visitor_logs').delete().neq('id', 0);
+  if (error) alert('Ошибка удаления: ' + error.message);
+  else fetchLogs();
+});
+
+document.getElementById('closeAdmin').addEventListener('click', () => {
+  adminPanel.style.display = 'none';
+});
+
+let keyBuffer = '';
+document.addEventListener('keydown', (e) => {
+  if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+  keyBuffer += e.key;
+  if (keyBuffer.length > 10) keyBuffer = keyBuffer.slice(-10);
+  if (keyBuffer.endsWith('1362')) {
+    const isHidden = adminPanel.style.display === 'none';
+    adminPanel.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) fetchLogs();
+    keyBuffer = '';
+  }
+});
+
+// Логируем вход
+window.addEventListener('load', () => logEvent('Зашел на сайт'));
+
+/* ============================================================
+   НАСТРОЙКИ САЙТА
+   ============================================================ */
+const CONFIG = {
+  herName:  'Кира',      
+  yourName: 'я',       
+};
+
+document.getElementById('name1').textContent = CONFIG.herName;
+document.getElementById('yourNameSig').textContent = CONFIG.yourName;
+
+/* ============================================================
+   AUDIO
+   ============================================================ */
+let audioCtx = null, soundOn = true;
+const soundBtn = document.getElementById('sound');
+
+function initAudio(){
+  if (audioCtx) return;
+  try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){}
+}
+document.addEventListener('pointerdown', initAudio, { once: true });
+
+soundBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  soundOn = !soundOn;
+  soundBtn.classList.toggle('off', !soundOn);
+  if (soundOn) beep(740, .1, .05);
+});
+
+function beep(freq, dur = .12, vol = .06, type = 'sine'){
+  if (!soundOn || !audioCtx) return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type; o.frequency.value = freq;
+  const t = audioCtx.currentTime;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t + .01);
+  g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(t); o.stop(t + dur + .02);
+}
+
+function chime(){ beep(880, .18, .05); setTimeout(()=>beep(1174, .22, .04), 80); }
+function rustle(){ beep(180, .15, .04, 'triangle'); }
+function heartbeat(){
+  if (!soundOn) return;
+  beep(55, .12, .12, 'sine');
+  setTimeout(()=>beep(60, .15, .09, 'sine'), 160);
+}
+
+/* ============================================================
+   CANVAS: RAIN
+   ============================================================ */
+const rainC = document.getElementById('rain');
+const rctx = rainC.getContext('2d');
+let RW = 0, RH = 0;
+function resizeRain(){
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  RW = rainC.clientWidth; RH = rainC.clientHeight;
+  rainC.width = RW * dpr; rainC.height = RH * dpr;
+  rctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+addEventListener('resize', resizeRain); resizeRain();
+
+const drops = [];
+function spawnDrop(){
+  drops.push({
+    x: Math.random() * RW, y: -20,
+    len: 12 + Math.random() * 22,
+    sp: 6 + Math.random() * 8,
+    op: .2 + Math.random() * .35,
+  });
+}
+function tickRain(){
+  rctx.clearRect(0, 0, RW, RH);
+  if (document.body.dataset.mode === 'dark'){
+    if (drops.length < 120 && Math.random() < .7) spawnDrop();
+  }
+  for (let i = drops.length - 1; i >= 0; i--){
+    const d = drops[i];
+    d.y += d.sp;
+    if (d.y > RH + 20){ drops.splice(i, 1); continue; }
+    rctx.strokeStyle = `rgba(200,215,235,${d.op})`;
+    rctx.lineWidth = 1;
+    rctx.beginPath();
+    rctx.moveTo(d.x, d.y);
+    rctx.lineTo(d.x - 1.5, d.y + d.len);
+    rctx.stroke();
+  }
+  requestAnimationFrame(tickRain);
+}
+tickRain();
+
+/* ============================================================
+   CANVAS: FX
+   ============================================================ */
+const fxC = document.getElementById('fx');
+const fctx = fxC.getContext('2d');
+let FW = 0, FH = 0;
+function resizeFx(){
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  FW = fxC.clientWidth; FH = fxC.clientHeight;
+  fxC.width = FW * dpr; fxC.height = FH * dpr;
+  fctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+addEventListener('resize', resizeFx); resizeFx();
+
+const particles = [];
+function spawnInk(x, y){
+  if (particles.length > 200) return;
+  particles.push({
+    type:'ink', x, y,
+    vx: (Math.random()-.5)*.4, vy: (Math.random()-.5)*.4,
+    r: 1.5+Math.random()*2.5,
+    alpha: .55, decay: .012,
+    color: 'rgba(42,30,19,1)',
+  });
+}
+
+function tickFx(){
+  fctx.clearRect(0, 0, FW, FH);
+  for (let i = particles.length-1; i>=0; i--){
+    const p = particles[i];
+    if (p.type === 'ink'){
+      p.x += p.vx; p.y += p.vy; p.alpha -= p.decay; p.r *= .995;
+      if (p.alpha <= 0 || p.r < .3){ particles.splice(i,1); continue; }
+      fctx.save();
+      fctx.globalAlpha = p.alpha;
+      fctx.fillStyle = p.color;
+      fctx.beginPath(); fctx.arc(p.x, p.y, p.r, 0, 7); fctx.fill();
+      fctx.restore();
+    }
+  }
+  requestAnimationFrame(tickFx);
+}
+tickFx();
+
+/* ============================================================
+   CURSOR
+   ============================================================ */
+const cur = document.getElementById('cursor');
+if (matchMedia('(hover:hover) and (pointer:fine)').matches){
+  let cx = innerWidth/2, cy = innerHeight/2, tx = cx, ty = cy;
+  let lastInk = 0;
+  addEventListener('pointermove', e => {
+    tx = e.clientX; ty = e.clientY;
+    cur.classList.add('on');
+    if (document.body.dataset.screen === 's2'){
+      const now = performance.now();
+      if (now - lastInk > 26){
+        spawnInk(e.clientX, e.clientY);
+        lastInk = now;
+      }
+    }
+  });
+  addEventListener('pointerdown', () => cur.style.transform = 'translate(-50%,-50%) scale(1.6)');
+  addEventListener('pointerup',   () => cur.style.transform = 'translate(-50%,-50%)');
+  (function loop(){
+    cx += (tx-cx)*.22; cy += (ty-cy)*.22;
+    cur.style.left = cx+'px'; cur.style.top = cy+'px';
+    requestAnimationFrame(loop);
+  })();
+}
+
+/* ============================================================
+   SCREEN NAVIGATION
+   ============================================================ */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.toggle('active', s.id === id);
+  });
+  document.body.dataset.screen = id;
+  if (['s2','s3','s4','s5','s6'].includes(id)){
+    document.body.dataset.mode = 'paper';
+  } else {
+    document.body.dataset.mode = 'dark';
+  }
+  if (id === 's6'){ setTimeout(()=>{ chime(); }, 400); }
+}
+
+/* ============================================================
+   s0 → s1
+   ============================================================ */
+document.getElementById('startBtn').addEventListener('click', () => {
+  initAudio();
+  chime();
+  logEvent('Нажал "Открыть"');
+  show('s1');
+});
+
+/* ============================================================
+   s1: HOLD-TO-SEAL
+   ============================================================ */
+const seal = document.getElementById('seal');
+const envelope = document.getElementById('envelope');
+let holdTimer = null, holdStart = 0;
+const HOLD_MS = 1600;
+let opened = false;
+
+function startHold(e){
+  e.preventDefault();
+  if (opened) return;
+  initAudio();
+  holdStart = performance.now();
+  cancelAnimationFrame(holdTimer);
+  (function tick(){
+    const elapsed = performance.now() - holdStart;
+    const p = Math.min(100, (elapsed / HOLD_MS) * 100);
+    seal.style.setProperty('--p', p);
+    if (p < 100) holdTimer = requestAnimationFrame(tick);
+    else openEnvelope();
+  })();
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+function endHold(){
+  cancelAnimationFrame(holdTimer);
+  if (opened) return;
+  seal.style.setProperty('--p', 0);
+}
+
+seal.addEventListener('pointerdown', startHold);
+seal.addEventListener('pointerup', endHold);
+seal.addEventListener('pointercancel', endHold);
+seal.addEventListener('pointerleave', endHold);
+
+function openEnvelope(){
+  if (opened) return;
+  opened = true;
+  envelope.classList.add('open');
+  document.getElementById('sealHint').textContent = '';
+  beep(420, .12, .07);
+  setTimeout(()=>beep(620, .2, .06), 200);
+  setTimeout(()=>beep(830, .25, .05), 450);
+  logEvent('Сломал печать на конверте');
+  setTimeout(()=>show('s2'), 1400);
+}
+
+/* ============================================================
+   s2: LETTER
+   ============================================================ */
+const lines = [...document.querySelectorAll('#s2 .line')];
+const sigEl = document.getElementById('sig');
+const tapHint = document.getElementById('tapHint');
+const letterNext = document.getElementById('letterNext');
+let lineIdx = 0;
+
+function advanceLine(){
+  if (lineIdx >= lines.length){ return; }
+  const ln = lines[lineIdx];
+  ln.classList.add('on');
+  rustle();
+  lineIdx++;
+  logEvent('Прочитал строку письма');
+  if (lineIdx === lines.length){
+    sigEl.classList.add('on');
+    tapHint.classList.add('hide');
+    setTimeout(() => {
+      letterNext.style.display = '';
+      beep(700, .15, .05);
+    }, 500);
+  }
+}
+
+document.getElementById('letter').addEventListener('click', e => {
+  if (e.target.closest('#letterNext')) return;
+  if (e.target.classList.contains('inkblot')) return;
+  if (lineIdx < lines.length) advanceLine();
+});
+document.getElementById('letterNext').addEventListener('click', e => {
+  e.stopPropagation();
+  chime();
+  show('s3');
+});
+
+document.getElementById('inkblot').addEventListener('click', e => {
+  e.stopPropagation();
+  e.currentTarget.classList.add('revealed');
+  document.getElementById('easter').classList.add('on');
+  beep(340, .3, .05, 'triangle');
+  logEvent('Нашел скрытую кляксу');
+});
+
+/* ============================================================
+   s3: CONFESSION
+   ============================================================ */
+const confBoxes = [...document.querySelectorAll('#confess input')];
+const verdictEl = document.getElementById('verdict');
+const confessNext = document.getElementById('confessNext');
+
+confBoxes.forEach((cb, index) => {
+  cb.addEventListener('change', () => {
+    beep(cb.checked ? 880 : 440, .09, .05);
+    logEvent(`Кликнул пункт признания №${index + 1}`);
+    const done = confBoxes.filter(c => c.checked).length;
+    if (done === confBoxes.length){
+      verdictEl.classList.add('on');
+      confessNext.disabled = false;
+      setTimeout(chime, 300);
+    } else {
+      verdictEl.classList.remove('on');
+      confessNext.disabled = true;
+    }
+  });
+});
+confessNext.addEventListener('click', () => { chime(); show('s4'); });
+
+/* ============================================================
+   s4: SCROLLS
+   ============================================================ */
+const scrolls = [...document.querySelectorAll('.scroll')];
+const thumbArea = document.getElementById('thumbArea');
+const scrollNext = document.getElementById('scrollNext');
+const thumb = document.getElementById('thumb');
+let openedScrolls = new Set();
+
+scrolls.forEach(s => {
+  s.addEventListener('click', () => {
+    s.classList.toggle('open');
+    beep(s.classList.contains('open') ? 620 : 400, .1, .05);
+    openedScrolls.add(s.dataset.i);
+    logEvent('Открыл обещание', { title: s.querySelector('.scroll-title').textContent });
+    if (openedScrolls.size === scrolls.length){
+      thumbArea.classList.add('on');
+    }
+  });
+});
+
+let thumbTimer = null, thumbOpened = false;
+function startThumb(e){
+  e.preventDefault();
+  if (thumbOpened) return;
+  initAudio();
+  const start = performance.now();
+  cancelAnimationFrame(thumbTimer);
+  (function tick(){
+    const elapsed = performance.now() - start;
+    const p = Math.min(100, (elapsed / 1400) * 100);
+    thumb.style.setProperty('--p', p);
+    if (p < 100) thumbTimer = requestAnimationFrame(tick);
+    else sealThumb();
+  })();
+  if (navigator.vibrate) navigator.vibrate(20);
+}
+function endThumb(){
+  cancelAnimationFrame(thumbTimer);
+  if (thumbOpened) return;
+  thumb.style.setProperty('--p', 0);
+}
+function sealThumb(){
+  thumbOpened = true;
+  thumb.classList.add('done');
+  thumb.textContent = '✓';
+  beep(620, .15, .07);
+  setTimeout(()=>beep(880, .2, .06), 150);
+  setTimeout(()=>beep(1174, .3, .05), 350);
+  if (navigator.vibrate) navigator.vibrate([30, 40, 80]);
+  scrollNext.disabled = false;
+  scrollNext.style.opacity = '1';
+  logEvent('Зажал палец (подтвердил обещания)');
+}
+thumb.addEventListener('pointerdown', startThumb);
+thumb.addEventListener('pointerup', endThumb);
+thumb.addEventListener('pointercancel', endThumb);
+thumb.addEventListener('pointerleave', endThumb);
+
+scrollNext.addEventListener('click', () => { chime(); show('s5'); });
+
+/* ============================================================
+   s5: YES / NO
+   ============================================================ */
+const noBtn = document.getElementById('noBtn');
+const yesBtn = document.getElementById('yesBtn');
+const question = document.getElementById('question');
+const NO_TEXTS = ['Нет', 'Точно?', 'Подумай ещё', 'Серьёзно?', 'Ну пожалуйста', 'Я подожду'];
+let dodges = 0, lastDodge = 0;
+
+function dodge(e){
+  if (e) e.preventDefault();
+  const now = Date.now();
+  if (now - lastDodge < 320) return;
+  lastDodge = now;
+  dodges++;
+  logEvent(`Нажала "Нет", но кнопка убежала (попытка ${dodges})`);
+  beep(240 + Math.random() * 160, .08, .04, 'triangle');
+  heartbeat();
+
+  if (dodges === 1){ noBtn.style.position = 'fixed'; noBtn.style.zIndex = '60'; }
+  if (dodges >= NO_TEXTS.length){
+    noBtn.style.opacity = '0';
+    noBtn.style.pointerEvents = 'none';
+    question.textContent = 'Кажется, выбор очевиден.';
+    yesBtn.style.transform = 'scale(1.15)';
+    return;
+  }
+  noBtn.textContent = NO_TEXTS[dodges];
+  const pad = 20, w = noBtn.offsetWidth || 130, h = noBtn.offsetHeight || 50;
+  noBtn.style.left = pad + Math.random() * Math.max(10, innerWidth - w - pad*2) + 'px';
+  noBtn.style.top  = pad + Math.random() * Math.max(10, innerHeight - h - pad*2) + 'px';
+  noBtn.style.transform = 'scale(' + Math.max(.5, 1 - dodges * .08) + ')';
+  yesBtn.style.transform = 'scale(' + Math.min(1.3, 1 + dodges * .05) + ')';
+}
+noBtn.addEventListener('pointerenter', dodge);
+noBtn.addEventListener('click', dodge);
+noBtn.addEventListener('touchstart', dodge, { passive: false });
+
+yesBtn.addEventListener('click', () => {
+  chime();
+  setTimeout(()=>chime(), 250);
+  logEvent('Нажала "Прощаю"');
+  show('s6');
+});
+
+/* ============================================================
+   s6: FINALE
+   ============================================================ */
+const psBtn = document.getElementById('psBtn');
+const psText = document.getElementById('psText');
+psBtn.addEventListener('click', () => {
+  const on = psText.classList.toggle('on');
+  beep(on ? 780 : 460, .1, .05);
+  psBtn.style.opacity = on ? '.4' : '1';
+  logEvent('Открыла P.S.');
+});
+
+document.getElementById('replay').addEventListener('click', () => {
+  logEvent('Нажала "Перечитать"');
+  opened = false;
+  envelope.classList.remove('open');
+  seal.style.setProperty('--p', 0);
+  lines.forEach(l => l.classList.remove('on'));
+  lineIdx = 0;
+  sigEl.classList.remove('on');
+  tapHint.classList.remove('hide');
+  letterNext.style.display = 'none';
+  document.getElementById('easter').classList.remove('on');
+  document.getElementById('inkblot').classList.remove('revealed');
+  confBoxes.forEach(c => c.checked = false);
+  verdictEl.classList.remove('on');
+  confessNext.disabled = true;
+  scrolls.forEach(s => s.classList.remove('open'));
+  openedScrolls.clear();
+  thumbArea.classList.remove('on');
+  thumbOpened = false;
+  thumb.classList.remove('done');
+  thumb.textContent = '✳';
+  thumb.style.setProperty('--p', 0);
+  scrollNext.disabled = true;
+  scrollNext.style.opacity = '.3';
+  psText.classList.remove('on');
+  psBtn.style.opacity = '1';
+  dodges = 0; lastDodge = 0;
+  noBtn.removeAttribute('style');
+  noBtn.textContent = NO_TEXTS[0];
+  yesBtn.style.transform = '';
+  question.textContent = 'Ты сможешь меня простить?';
+  show('s0');
+});
+</script>
+</body>
+</html>
