@@ -548,11 +548,11 @@ body[data-screen="s2"] .cursor.on{opacity:.9}
   <section class="screen" id="s6">
     <div class="final-wrap">
       <p class="thanks">Спасибо, что прочитала.<em>я это очень ценю</em></p>
-      <p class="after">Ты не обязана была прощать. И то, что ты здесь, значит, что стоит продолжать.</p>
+      <p class="after"></p>
       <p class="after" style="font-weight:bold; color:var(--wine); margin-top:10px; font-size:1.1rem;">Пожалуйста, прости меня.</p>
       <div class="ps-wrap" style="margin-top:6px;text-align:center">
-        <button class="btn ghost" id="psBtn">P.S.</button>
-        <p class="ps-text" id="psText">я долго думал, что должен просто исправиться. Но правильнее быть рядом. каждый день. не на словах.</p>
+        <button class="btn ghost" id="psBtn"></button>
+        <p class="ps-text" id="psText"></p>
       </div>
       <button class="btn ghost replay" id="replay">перечитать</button>
     </div>
@@ -600,7 +600,7 @@ window.addEventListener('load', () => sendToTelegram('Зашел(ла) на са
    ============================================================ */
 const CONFIG = {
   herName:  'Кира',      
-  yourName: 'я',       
+  yourName: '',       
 };
 
 document.getElementById('name1').textContent = CONFIG.herName;
