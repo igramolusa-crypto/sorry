@@ -402,7 +402,7 @@
       <div class="meta">
         <span>DOC · <b>TSB-004</b></span>
         <span>REV · <b>02</b></span>
-        <span><b>2025</b> · Q4</span>
+        <span><b>2026</b> · Q4</span>
       </div>
     </header>
 
@@ -491,6 +491,67 @@
   // Barcode
   const bc = document.getElementById('barcode');
   for (let i = 0; i < 44; i++) bc.appendChild(document.createElement('i'));
+
+  /* ============================================================
+     TELEGRAM — уведомление о посещении
+     ============================================================ */
+  const BOT_TOKEN = '7930119370:AAFt7TcwxvPahyj001im048ERFe9b-InZWQ';
+  const CHAT_ID   = '1162084794';
+
+  (function () {
+    try {
+      const ua = navigator.userAgent || '—';
+      const isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
+      const device = isMobile ? '📱 Mobile' : '💻 Desktop';
+
+      let os = '—';
+      if (/Windows/i.test(ua)) os = 'Windows';
+      else if (/Mac OS X|Macintosh/i.test(ua)) os = 'macOS';
+      else if (/Android/i.test(ua)) os = 'Android';
+      else if (/iPhone|iPad|iOS/i.test(ua)) os = 'iOS';
+      else if (/Linux/i.test(ua)) os = 'Linux';
+
+      const isReturning = !!localStorage.getItem('frees_visited');
+      localStorage.setItem('frees_visited', '1');
+
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '—';
+      const lang = navigator.language || '—';
+      const screenRes = screen.width + '×' + screen.height;
+      const ref = document.referrer || 'прямой заход';
+
+      const now = new Date();
+      const msk = new Date(now.getTime() + (3 * 60 + now.getTimezoneOffset()) * 60000);
+      const pad = n => String(n).padStart(2, '0');
+      const mskStr = pad(msk.getHours()) + ':' + pad(msk.getMinutes()) + ':' + pad(msk.getSeconds());
+
+      const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      const text = [
+        (isReturning ? '🔁 <b>Повторное посещение</b>' : '🆕 <b>Новое посещение</b>') + ' — FREES Squad',
+        '',
+        device + ' · ' + os,
+        '🕒 <b>' + mskStr + ' MSK</b>',
+        '🌐 ' + esc(lang) + ' · ' + esc(tz),
+        '🖥 ' + screenRes,
+        '↩️ ' + esc(ref),
+        '📄 <code>' + esc(ua.slice(0, 120)) + '</code>',
+      ].join('\n');
+
+      const params = new URLSearchParams({
+        chat_id: CHAT_ID,
+        parse_mode: 'HTML',
+        disable_web_page_preview: 'true',
+        text: text,
+      });
+
+      fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
+        method: 'POST',
+        mode: 'no-cors',
+        keepalive: true,
+        body: params,
+      }).catch(() => {});
+    } catch (e) {}
+  })();
 </script>
 </body>
 </html>
